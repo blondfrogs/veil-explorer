@@ -5,8 +5,8 @@
 </template>
 
 <script setup lang="ts">
-import type { GraphData } from "@/models/System/GraphData";
 import type { ChartOptions } from "chart.js";
+import type { GraphData } from "@/models/System/GraphData";
 import { Chart } from "chart.js";
 
 const props = defineProps<{

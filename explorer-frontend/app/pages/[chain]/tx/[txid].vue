@@ -95,9 +95,9 @@
 
 <script setup lang="ts">
 import type { TxResponse } from "@/models/API/TxResponse";
+import LockClosedIcon from "@heroicons/vue/24/solid/LockClosedIcon";
 import { useFormatting } from "@/composables/Formatting";
 import { useBlockchainInfo } from "@/composables/States";
-import LockClosedIcon from "@heroicons/vue/24/solid/LockClosedIcon";
 
 const { t } = useI18n();
 const { getApiPath } = useConfigs();

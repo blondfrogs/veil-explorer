@@ -31,7 +31,7 @@
       <span>{{ getAge(val) }}</span>
       <ChevronDownIcon class="h-5 w-5 text-sky-700 dark:text-sky-400" />
     </button>
-    <div v-if="openedBlock.indexOf(val.height) > -1" class="md:hidden grid grid-cols-2 col-span-2">
+    <div v-if="openedBlock.includes(val.height)" class="md:hidden grid grid-cols-2 col-span-2">
       <div>{{ t("Blocks.Timestamp") }}</div>
       <div class="text-right">
         <div>{{ formatDateLocal(val.time) }}</div>
@@ -97,9 +97,9 @@
 
 <script setup lang="ts">
 import type { SimplifiedBlock } from "@/models/API/SimplifiedBlock";
+import { ChevronDownIcon/* , ChevronUpIcon */ } from "@heroicons/vue/24/solid";
 import { useBlockchain } from "@/composables/Blockchain";
 import { useFormatting } from "@/composables/Formatting";
-import { ChevronDownIcon/* , ChevronUpIcon */ } from "@heroicons/vue/24/solid";
 
 const props = defineProps<{
   data: Array<SimplifiedBlock>;
@@ -188,7 +188,7 @@ const getAge = (block: SimplifiedBlock) => {
       const scheck = allChecks[index + 1]!;
       const previnf
         = (Math.floor(infFormatted) * check.val)
-        / (scheck.val > 0 ? scheck.val : 1);
+          / (scheck.val > 0 ? scheck.val : 1);
       secondaryInfFormatted
         = diff / (scheck.val > 0 ? scheck.val : 1) - previnf;
       secondaryInfFloor = Math.floor(secondaryInfFormatted);

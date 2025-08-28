@@ -29,10 +29,10 @@
 
 <script setup lang="ts">
 import type { NuxtError } from "#app";
+import Cookie from "js-cookie";
 import {
   useThemeState,
 } from "@/composables/States";
-import Cookie from "js-cookie";
 import "toastify-js/src/toastify.css";
 
 const props = defineProps({

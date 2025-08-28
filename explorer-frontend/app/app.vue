@@ -30,6 +30,7 @@
 
 <script setup lang="ts">
 import type { BlockchainInfo } from "@/models/API/BlockchainInfo";
+import Cookie from "js-cookie";
 import { useConfigs } from "@/composables/Configs";
 import { useNetworkManager } from "@/composables/NetworkManager";
 import {
@@ -37,7 +38,6 @@ import {
   useBlockchainInfo,
   useThemeState,
 } from "@/composables/States";
-import Cookie from "js-cookie";
 import "toastify-js/src/toastify.css";
 
 const config = useRuntimeConfig();
@@ -129,8 +129,8 @@ const isSynchronizing = computed(() => {
 
   const shouldSync
     = blockchaininfoDataState.value.blocks
-    - config.public.syncNoticeCase
-    > backgroundInfoDataState.value.currentSyncedBlock;
+      - config.public.syncNoticeCase
+      > backgroundInfoDataState.value.currentSyncedBlock;
 
   return shouldSync;
 });

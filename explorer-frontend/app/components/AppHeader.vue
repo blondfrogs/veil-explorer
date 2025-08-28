@@ -234,11 +234,12 @@
 </template>
 
 <script setup lang="ts">
-import { useBlockchainInfo, useThemeState } from "@/composables/States";
+import { useI18n } from "#i18n";
 // import SunIcon from "@heroicons/vue/24/solid/SunIcon";
 import Bars3Icon from "@heroicons/vue/24/outline/Bars3Icon";
 import MoonIcon from "@heroicons/vue/24/solid/MoonIcon";
 import Cookie from "js-cookie";
+import { useBlockchainInfo, useThemeState } from "@/composables/States";
 // import type { LocaleObject } from "@nuxtjs/i18n";
 
 const { t, locales, locale, fallbackLocale }

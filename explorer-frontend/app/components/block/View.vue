@@ -172,9 +172,6 @@
 
 <script setup lang="ts">
 import type { BlockResponse } from "@/models/API/BlockResponse";
-import { useBlockchain } from "@/composables/Blockchain";
-import { useFormatting } from "@/composables/Formatting";
-import { useBlockchainInfo } from "@/composables/States";
 import { LockClosedIcon } from "@heroicons/vue/24/solid";
 import {
   createPopperLite as createPopper,
@@ -182,6 +179,9 @@ import {
   flip,
   hide, */
 } from "@popperjs/core";
+import { useBlockchain } from "@/composables/Blockchain";
+import { useFormatting } from "@/composables/Formatting";
+import { useBlockchainInfo } from "@/composables/States";
 
 const props = defineProps<{
   block: BlockResponse;

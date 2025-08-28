@@ -363,15 +363,15 @@ import type {
   TxVinSimpleDecoded,
   TxVoutSimpleDecoded,
 } from "@/models/API/BlockResponse";
+import ArrowRightCircleIcon from "@heroicons/vue/24/solid/ArrowRightCircleIcon";
+import ChevronDownIcon from "@heroicons/vue/24/solid/ChevronDownIcon";
+import ChevronRightIcon from "@heroicons/vue/24/solid/ChevronRightIcon";
 import { COIN } from "@/core/Constants";
 import {
   OutputTypes,
   TxInType,
   txnouttype,
 } from "@/models/API/BlockResponse";
-import ArrowRightCircleIcon from "@heroicons/vue/24/solid/ArrowRightCircleIcon";
-import ChevronDownIcon from "@heroicons/vue/24/solid/ChevronDownIcon";
-import ChevronRightIcon from "@heroicons/vue/24/solid/ChevronRightIcon";
 
 const props = defineProps<{
   tx: TransactionSimpleDecoded;

@@ -222,9 +222,6 @@
 </template>
 
 <script setup lang="ts">
-import { useFormatting } from "@/composables/Formatting";
-import { useBackgroundInfo, useBlockchainInfo } from "@/composables/States";
-import { COIN } from "@/core/Constants";
 import {
   ArrowPathIcon,
   // ,
@@ -241,6 +238,9 @@ import {
   PuzzlePieceIcon,
   ServerIcon,
 } from "@heroicons/vue/24/solid";
+import { useFormatting } from "@/composables/Formatting";
+import { useBackgroundInfo, useBlockchainInfo } from "@/composables/States";
+import { COIN } from "@/core/Constants";
 
 const { t } = useI18n();
 const { formatDateTimeLocal } = useFormatting();
@@ -261,9 +261,9 @@ const getSize = () => {
 const calculateBlocksplit = (val: number) => {
   const overall
     = backgroundData.value?.algoStats?.pos!
-    + backgroundData.value?.algoStats?.progpow!
-    + backgroundData.value?.algoStats?.randomx!
-    + backgroundData.value?.algoStats?.sha256d!;
+      + backgroundData.value?.algoStats?.progpow!
+      + backgroundData.value?.algoStats?.randomx!
+      + backgroundData.value?.algoStats?.sha256d!;
   return ((val / overall) * 100).toFixed(2);
 };
 
