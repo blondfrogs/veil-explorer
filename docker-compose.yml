@@ -1,0 +1,115 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: veil-explorer-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: veilexplorer
+      POSTGRES_USER: ${POSTGRES_USER:-veilexplorer}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./explorer-backend/schemas:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-veilexplorer}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - veil-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: veil-explorer-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - veil-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./explorer-backend
+      dockerfile: Dockerfile
+    container_name: veil-explorer-backend
+    restart: unless-stopped
+    network_mode: host
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Database connection - use localhost since we're on host network
+      ConnectionStrings__DefaultConnection: "Host=localhost;Port=${POSTGRES_PORT:-5434};Database=veilexplorer;Username=${POSTGRES_USER:-veilexplorer};Password=${POSTGRES_PASSWORD:-changeme};Pooling=true;Maximum Pool Size=100;Tcp Keepalive=true;Keepalive=60;No Reset On Close=true;Client Encoding=UTF8"
+      ConnectionStrings__Redis: "localhost:${REDIS_PORT:-6381}"
+      # Veil Node RPC connection - now can use localhost directly
+      Explorer__Node__Url: http://127.0.0.1:5050/
+      Explorer__Node__Username: ${VEIL_RPC_USER:-veilrpc}
+      Explorer__Node__Password: ${VEIL_RPC_PASSWORD:-changeme}
+      # CORS origins
+      Server__CorsOrigins__0: ${FRONTEND_URL:-http://localhost:3080}
+      # Memory cache
+      MemoryCache__Host: localhost
+      MemoryCache__Port: ${REDIS_PORT:-6381}
+    volumes:
+      - backend_data:/app/data
+      - backend_logs:/app/logs
+      - ./explorer-backend/appsettings.json:/app/appsettings.json:ro
+
+  # Frontend
+  frontend:
+    build:
+      context: ./explorer-frontend
+      dockerfile: Dockerfile
+      args:
+        NUXT_PUBLIC_SITE_URL: ${SITE_URL:-http://localhost:3000}
+        NUXT_PUBLIC_I18N_BASE_URL: ${SITE_URL:-http://localhost:3000}
+        NUXT_PUBLIC_BASE_URL: ${SITE_URL:-http://localhost:3000}
+        NUXT_PUBLIC_CHAIN_DEFAULT: main
+        NUXT_PUBLIC_CHAIN_APIS: "[{\"name\": \"main\", \"path\": \"${BACKEND_API_URL:-http://localhost:5000/api}\"}]"
+        NUXT_PUBLIC_RECENT_BLOCKS_COUNT: 5
+        NUXT_PUBLIC_BLOCKS_PER_PAGE: 15
+        NUXT_PUBLIC_TXS_PER_PAGE: 15
+        NUXT_PUBLIC_MAX_BLOCK_WEIGHT: 4000000
+        NUXT_PUBLIC_SYNC_NOTICE_CASE: 15
+        NUXT_PUBLIC_COOKIE_SAVE_DAYS: 90
+    container_name: veil-explorer-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      NODE_ENV: production
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    networks:
+      - veil-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_data:
+    driver: local
+  backend_logs:
+    driver: local
+
+networks:
+  veil-network:
+    driver: bridge

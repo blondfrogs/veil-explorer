@@ -8,7 +8,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       site: {
-        url: "http://localhost:3000",
+        url: "http://explorer.veil.zelcore.io",
       },
       baseUrl: process.env.NUXT_PUBLIC_BASE_URL! as string,
       chainDefault: process.env.NUXT_PUBLIC_CHAIN_DEFAULT! as string,
@@ -93,7 +93,7 @@ export default defineNuxtConfig({
       redirectOn: "root",
       alwaysRedirect: false,
     },
-    baseUrl: process.env.NUXT_I18N_BASE_URL || "https://explorer.veil-project.com",
+    baseUrl: process.env.NUXT_I18N_BASE_URL || "http://explorer.veil.zelcore.io",
   },
   image: {
     format: ["webp", "png"],
@@ -110,14 +110,14 @@ export default defineNuxtConfig({
     redirectToCanonicalSiteUrl: process.env.NODE_ENV !== "development",
   },
   site: {
-    url: process.env.NUXT_PUBLIC_SITE_URL || "https://explorer.veil-project.com",
+    url: process.env.NUXT_PUBLIC_SITE_URL || "http://explorer.veil.zelcore.io",
   },
   schemaOrg: {
     identity: {
       type: "Organization",
       name: "Veil Project",
       url: "https://veil-project.com",
-      logo: `${process.env.NUXT_PUBLIC_SITE_URL || "https://veilproject.org"}/icon-192x192-light.png`,
+      logo: `${process.env.NUXT_PUBLIC_SITE_URL || "http://explorer.veil.zelcore.io"}/icon-192x192-light.png`,
     },
   },
   css: ["~/assets/css/tailwind.css", "~/assets/css/common.css"],

@@ -7,6 +7,12 @@ Example: https://explorer.veil-project.com
 
 [![Build](https://github.com/steel97/veil-explorer/actions/workflows/build.yaml/badge.svg)](https://github.com/steel97/veil-explorer/actions/workflows/build.yaml)
 
+# Quick Start with Docker
+
+See [DOCKER.md](DOCKER.md) for easy deployment using Docker Compose.
+
+**⚠️ Security Note:** Always copy from `.example` files and configure with your own credentials. Never commit real passwords to git. See [SECURITY.md](SECURITY.md) for details.
+
 # Features
 - light/dark theme
 - multilingual UI (see [/docs/localization.md](/docs/localization.md))

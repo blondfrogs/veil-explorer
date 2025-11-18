@@ -1,0 +1,14 @@
+**/.dockerignore
+**/.git
+**/.gitignore
+**/.nuxt
+**/.output
+**/node_modules
+**/dist
+**/.vscode
+**/.idea
+**/*.log
+**/.env
+**/.env.local
+**/.env.*.local
+README.md

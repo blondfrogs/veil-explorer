@@ -72,7 +72,7 @@
 		};
 		
 		const connection = new signalR.HubConnectionBuilder()
-			.withUrl("https://explorer-api.veil-project.com/api/internal")
+			.withUrl("http://api.veil.zelcore.io/api/internal")
 			.configureLogging(signalR.LogLevel.Information)
 			.build();
 	
@@ -90,12 +90,12 @@
 		
 		connection.on("done", (internal) => {
 			const accessKey = document.getElementById("accessKey").value;
-			window.location.replace(`https://explorer-api.veil-project.com/api/internal/fetchexportedtxs?accessKey=${accessKey}&internalId=${internal}`);
+			window.location.replace(`http://api.veil.zelcore.io/api/internal/fetchexportedtxs?accessKey=${accessKey}&internalId=${internal}`);
 		});
 
 		connection.on("dllink", (internal) => {
 			const accessKey = document.getElementById("accessKey").value;
-			const dllink = `https://explorer-api.veil-project.com/api/internal/fetchexportedtxs?accessKey=${accessKey}&internalId=${internal}`;
+			const dllink = `http://api.veil.zelcore.io/api/internal/fetchexportedtxs?accessKey=${accessKey}&internalId=${internal}`;
 			document.getElementById("ndllink").innerHTML = `<a href="${dllink}">${dllink}</a>`;
 		});
 		
