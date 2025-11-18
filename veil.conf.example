@@ -1,0 +1,39 @@
+# Veil Node Configuration for Explorer
+# This file should be placed in your Veil data directory as veil.conf or default.conf
+
+# Enable server mode (required for RPC)
+server=1
+
+# Listen for connections
+listen=1
+
+# RPC bind address (use 127.0.0.1 for localhost only, or 0.0.0.0 for all interfaces)
+rpcbind=127.0.0.1
+
+# RPC port
+rpcport=5050
+
+# RPC authentication
+# Generate rpcauth with: python3 rpcauth.py <username> <password>
+# Download rpcauth.py from: https://github.com/Veil-Project/veil/blob/master/share/rpcauth/rpcauth.py
+# Example: python3 rpcauth.py veilrpc yourpassword
+# Then paste the generated rpcauth line below:
+rpcauth=veilrpc:hash$salt
+
+# Alternative: Use rpcuser and rpcpassword (less secure, not recommended)
+# rpcuser=veilrpc
+# rpcpassword=yourpassword
+
+# Enable transaction index (REQUIRED for explorer)
+txindex=1
+
+# Enable watch-only wallet mode (REQUIRED for watch-only address tracking)
+# Note: watchonly mode requires wallet enabled (do not use disablewallet)
+watchonly=1
+
+# Optional: Increase RPC timeout for large requests
+# rpcservertimeout=120
+
+# Optional: Allow RPC connections from specific IPs
+# rpcallowip=127.0.0.1
+# rpcallowip=172.0.0.0/8

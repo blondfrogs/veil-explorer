@@ -1,0 +1,147 @@
+#!/bin/bash
+#
+# Veil Watch-Only Addresses Backup Script
+# This script backs up watch-only addresses from veild and optionally copies to remote server
+#
+# SETUP: Copy this file to backup-watchonly-addresses.sh and configure
+# cp backup-watchonly-addresses.sh.example backup-watchonly-addresses.sh
+# chmod +x backup-watchonly-addresses.sh
+#
+
+set -e  # Exit on any error
+
+# ============================================================================
+# CONFIGURATION - Edit these values
+# ============================================================================
+
+# Veil RPC Settings
+VEIL_CLI="/path/to/veil-cli"                     # UPDATE: Path to veil-cli
+RPC_PORT="5050"
+RPC_USER="your_rpc_username"                     # UPDATE: Your RPC username
+RPC_PASSWORD="your_rpc_password"                 # UPDATE: Your RPC password
+
+# Backup Settings
+BACKUP_DIR="/path/to/backups/watchonly"          # UPDATE: Where to store backups
+RETENTION_DAYS=30                                # Keep backups for 30 days
+DATE_FORMAT=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILENAME="watchonly_backup_${DATE_FORMAT}.dat"
+
+# Remote Backup Settings (optional - set ENABLE_REMOTE_BACKUP=true to enable)
+ENABLE_REMOTE_BACKUP=false
+REMOTE_USER="backup_user"                        # UPDATE: SSH username
+REMOTE_HOST="backup-server.example.com"          # UPDATE: Backup server hostname/IP
+REMOTE_PATH="/backups/veil/watchonly/"           # UPDATE: Remote path
+SSH_KEY="/path/to/.ssh/id_rsa_backup"           # UPDATE: SSH key path (optional)
+
+# Logging
+LOG_DIR="${BACKUP_DIR}/logs"
+LOG_FILE="${LOG_DIR}/backup_watchonly_${DATE_FORMAT}.log"
+
+# ============================================================================
+# SCRIPT - No need to edit below this line
+# ============================================================================
+
+# Create directories if they don't exist
+mkdir -p "$BACKUP_DIR"
+mkdir -p "$LOG_DIR"
+
+# Logging function
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$LOG_FILE"
+}
+
+# Error handling
+error_exit() {
+    log "ERROR: $1"
+    exit 1
+}
+
+log "=========================================="
+log "Starting Veil watch-only addresses backup"
+log "=========================================="
+
+# Check if veil-cli exists
+if [ ! -f "$VEIL_CLI" ]; then
+    error_exit "veil-cli not found at $VEIL_CLI"
+fi
+
+# Check if veild is running
+log "Checking if veild is running..."
+if ! "$VEIL_CLI" -rpcport="$RPC_PORT" -rpcuser="$RPC_USER" -rpcpassword="$RPC_PASSWORD" getblockchaininfo > /dev/null 2>&1; then
+    error_exit "Cannot connect to veild. Is it running?"
+fi
+
+log "veild is running. Proceeding with backup..."
+
+# Run the backup command
+BACKUP_PATH="${BACKUP_DIR}/${BACKUP_FILENAME}"
+log "Creating backup at: $BACKUP_PATH"
+
+# Execute the RPC command and capture result
+RESULT=$("$VEIL_CLI" -rpcport="$RPC_PORT" -rpcuser="$RPC_USER" -rpcpassword="$RPC_PASSWORD" \
+    backupwatchonlyaddresses "$BACKUP_PATH" 2>> "$LOG_FILE")
+
+if [ $? -ne 0 ]; then
+    error_exit "Failed to create backup via RPC"
+fi
+
+# Log the result
+log "RPC Response: $RESULT"
+
+# Extract address count if available
+ADDR_COUNT=$(echo "$RESULT" | grep -oP '"addresses_exported":\s*\K\d+' || echo "unknown")
+log "Addresses exported: $ADDR_COUNT"
+
+# Verify backup was created
+if [ ! -f "$BACKUP_PATH" ]; then
+    error_exit "Backup file was not created at $BACKUP_PATH"
+fi
+
+BACKUP_SIZE=$(du -h "$BACKUP_PATH" | cut -f1)
+log "Backup created successfully: $BACKUP_FILENAME ($BACKUP_SIZE)"
+
+# Compress the backup (optional)
+log "Compressing backup..."
+if gzip -f "$BACKUP_PATH"; then
+    BACKUP_PATH="${BACKUP_PATH}.gz"
+    BACKUP_FILENAME="${BACKUP_FILENAME}.gz"
+    COMPRESSED_SIZE=$(du -h "$BACKUP_PATH" | cut -f1)
+    log "Backup compressed: $BACKUP_FILENAME ($COMPRESSED_SIZE)"
+fi
+
+# Copy to remote server if enabled
+if [ "$ENABLE_REMOTE_BACKUP" = true ]; then
+    log "Copying backup to remote server..."
+
+    # Build SCP command
+    SCP_CMD="scp"
+    if [ -n "$SSH_KEY" ] && [ -f "$SSH_KEY" ]; then
+        SCP_CMD="$SCP_CMD -i $SSH_KEY"
+    fi
+
+    # Copy file
+    if $SCP_CMD "$BACKUP_PATH" "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_PATH}"; then
+        log "Backup successfully copied to ${REMOTE_HOST}:${REMOTE_PATH}"
+    else
+        log "WARNING: Failed to copy backup to remote server"
+    fi
+fi
+
+# Clean up old backups
+log "Cleaning up old backups (older than $RETENTION_DAYS days)..."
+DELETED_COUNT=$(find "$BACKUP_DIR" -name "watchonly_backup_*.dat*" -type f -mtime +$RETENTION_DAYS -delete -print | wc -l)
+if [ "$DELETED_COUNT" -gt 0 ]; then
+    log "Deleted $DELETED_COUNT old backup(s)"
+else
+    log "No old backups to delete"
+fi
+
+# Clean up old logs
+find "$LOG_DIR" -name "backup_watchonly_*.log" -type f -mtime +$RETENTION_DAYS -delete
+
+log "=========================================="
+log "Backup completed successfully!"
+log "Local backup: $BACKUP_PATH"
+log "=========================================="
+
+exit 0

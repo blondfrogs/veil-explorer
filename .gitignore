@@ -1,0 +1,54 @@
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+
+# Backend configuration with real credentials
+explorer-backend/appsettings.json
+explorer-backend/appsettings.Production.json
+explorer-backend/appsettings.Development.json
+explorer-backend/appsettings.db.json
+explorer-backend/appsettings.rpc.json
+
+# Backup scripts with real passwords
+scripts/backup-watchonly-addresses.sh
+
+# Data and logs
+explorer-backend/data/
+explorer-backend/logs/
+veil-backups/
+*.log
+
+# Docker volumes
+postgres_data/
+redis_data/
+backend_data/
+backend_logs/
+
+# Node modules
+node_modules/
+.nuxt/
+.output/
+dist/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build outputs
+explorer-backend/bin/
+explorer-backend/obj/
+explorer-backend/output/
+
+# SSH keys
+*.pem
+*.key
+id_rsa*
+*.ppk
