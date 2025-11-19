@@ -4,6 +4,11 @@ services:
     image: postgres:15-alpine
     container_name: veil-explorer-postgres
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       POSTGRES_DB: veilexplorer
       POSTGRES_USER: ${POSTGRES_USER:-veilexplorer}
@@ -26,6 +31,11 @@ services:
     image: redis:7-alpine
     container_name: veil-explorer-redis
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
@@ -46,6 +56,11 @@ services:
       dockerfile: Dockerfile
     container_name: veil-explorer-backend
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     network_mode: host
     depends_on:
       postgres:
@@ -75,6 +90,11 @@ services:
     build:
       context: ./explorer-frontend
       dockerfile: Dockerfile
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
       args:
         NUXT_PUBLIC_SITE_URL: ${SITE_URL:-http://localhost:3000}
         NUXT_PUBLIC_I18N_BASE_URL: ${SITE_URL:-http://localhost:3000}
