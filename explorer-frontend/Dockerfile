@@ -3,11 +3,11 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 # Build arguments for environment variables needed at build time
-ARG NUXT_PUBLIC_SITE_URL=http://localhost:3000
-ARG NUXT_PUBLIC_I18N_BASE_URL=http://localhost:3000
-ARG NUXT_PUBLIC_BASE_URL=http://localhost:3000
+ARG NUXT_PUBLIC_SITE_URL=http://explorer.veil.zelcore.io
+ARG NUXT_PUBLIC_I18N_BASE_URL=http://explorer.veil.zelcore.io
+ARG NUXT_PUBLIC_BASE_URL=http://explorer.veil.zelcore.io
 ARG NUXT_PUBLIC_CHAIN_DEFAULT=main
-ARG NUXT_PUBLIC_CHAIN_APIS='[{"name": "main", "path": "http://localhost:5000/api"}]'
+ARG NUXT_PUBLIC_CHAIN_APIS=[{"name": "main", "path": "http://api.veil.zelcore.io/api"}]
 ARG NUXT_PUBLIC_RECENT_BLOCKS_COUNT=5
 ARG NUXT_PUBLIC_BLOCKS_PER_PAGE=15
 ARG NUXT_PUBLIC_TXS_PER_PAGE=15
