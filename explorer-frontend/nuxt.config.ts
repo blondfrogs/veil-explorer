@@ -8,7 +8,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       site: {
-        url: "http://localhost:3000",
+        url: "http://explorer.veil.zelcore.io",
       },
       baseUrl: process.env.NUXT_PUBLIC_BASE_URL! as string,
       chainDefault: process.env.NUXT_PUBLIC_CHAIN_DEFAULT! as string,
