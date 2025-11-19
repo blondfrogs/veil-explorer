@@ -90,11 +90,6 @@ services:
     build:
       context: ./explorer-frontend
       dockerfile: Dockerfile
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
       args:
         NUXT_PUBLIC_SITE_URL: ${SITE_URL:-http://localhost:3000}
         NUXT_PUBLIC_I18N_BASE_URL: ${SITE_URL:-http://localhost:3000}
@@ -107,6 +102,11 @@ services:
         NUXT_PUBLIC_MAX_BLOCK_WEIGHT: 4000000
         NUXT_PUBLIC_SYNC_NOTICE_CASE: 15
         NUXT_PUBLIC_COOKIE_SAVE_DAYS: 90
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     container_name: veil-explorer-frontend
     restart: unless-stopped
     depends_on:
