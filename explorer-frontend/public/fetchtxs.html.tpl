@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style>
+		.fields {
+			display: block;
+		}
+
+		.progress {
+			width: 200px;
+			height: 4px;
+			border: 1px solid black;
+			margin-top: 4px;
+			margin-bottom: 4px;
+		}
+
+		.progressInner {
+			height: 100%;
+			background-color:red;
+			width: 0%;
+		}
+
+		#errors {
+			color: red;
+		}
+	</style>
+</head>
+<body>
+	<div id="ncon">Connecting, please wait...</div>
+	<div id="content" style="display: none">
+		<div>Access key:</div>
+		<div>
+			<input type="text" id="accessKey">
+		</div>
+
+		<div>Addresses: <a href="javascript:void(0)" onclick="addfield()">Add field</a></div>
+		<div id="fields">
+			<input type="text" class="fields">
+		</div>
+		<div>
+			<button onclick="fetchtxs()">Fetch basecoin txs</button>
+		</div>
+		<div>
+			<div>Download link (will be available when all blocks will be scanned)</div>
+			<div id="ndllink"></div>
+		</div>
+		<div class="pre-prog" id="pre-prog"></div>
+		<div class="progress"><div class="progressInner" id="progress"></div></div>
+		<div id="errors"></div>
+
+	</div>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.1/signalr.js"></script>
+	<script>
+		// Configuration injected at build time
+		const INTERNAL_API_URL = '${NUXT_PUBLIC_INTERNAL_API_URL}';
+
+		const fetchtxs = () => {
+			const els = document.getElementsByClassName("fields");
+			const adrs = [];
+			for(const address of els) {
+				if(address.value != "")
+					adrs.push(address.value);
+			}
+
+			const accessKey = document.getElementById("accessKey").value;
+
+			connection.invoke("FetchBasecoinTxs", accessKey, adrs);
+		};
+
+		const addfield = () => {
+			const child = document.createElement("input");
+			child.type = "text";
+			child.className = "fields";
+			document.getElementById("fields").appendChild(child);
+		};
+
+		const connection = new signalR.HubConnectionBuilder()
+			.withUrl(INTERNAL_API_URL)
+			.configureLogging(signalR.LogLevel.Information)
+			.build();
+
+		connection.on("error", (message) => {
+			const li = document.createElement("li");
+			li.textContent = `${message}`;
+			document.getElementById("errors").appendChild(li);
+		});
+
+		connection.on("progress", (index, blocks) => {
+			document.getElementById("pre-prog").innerHTML = `Scanning blocks ${index} / ${blocks}`;
+			const percent = index / blocks * 100;
+			document.getElementById("progress").style.width = percent + "%";
+		});
+
+		connection.on("done", (internal) => {
+			const accessKey = document.getElementById("accessKey").value;
+			window.location.replace(`${INTERNAL_API_URL}/fetchexportedtxs?accessKey=${accessKey}&internalId=${internal}`);
+		});
+
+		connection.on("dllink", (internal) => {
+			const accessKey = document.getElementById("accessKey").value;
+			const dllink = `${INTERNAL_API_URL}/fetchexportedtxs?accessKey=${accessKey}&internalId=${internal}`;
+			document.getElementById("ndllink").innerHTML = `<a href="${dllink}">${dllink}</a>`;
+		});
+
+		connection.start().then(() => {
+			document.getElementById("ncon").style.display = "none"
+			document.getElementById("content").style.display = "block"
+		});
+	</script>
+</body>
+</html>

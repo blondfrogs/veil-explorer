@@ -17,7 +17,7 @@
           </div>
           <div class="mx-2 my-2 md:my-0">
             <a
-              href="https://veil-project.com" target="blank" class="
+              :href="veilProjectUrl" target="blank" class="
                 text-sky-700
                 dark:text-sky-400
                 hover:underline
@@ -27,7 +27,7 @@
           </div>
           <div class="mx-2 my-2 md:my-0">
             <a
-              href="https://veil-stats.com" target="blank" class="
+              :href="veilStatsUrl" target="blank" class="
                 text-sky-700
                 dark:text-sky-400
                 hover:underline
@@ -37,7 +37,7 @@
           </div>
           <div class="mx-2 my-2 md:my-0">
             <a
-              href="https://veil.tools" target="blank" class="
+              :href="veilToolsUrl" target="blank" class="
                 text-sky-700
                 dark:text-sky-400
                 hover:underline
@@ -47,7 +47,7 @@
           </div>
           <div class="mx-2 my-2 md:my-0">
             <a
-              href="https://github.com/steel97/veil-explorer" target="blank" class="
+              :href="githubRepoUrl" target="blank" class="
                 text-sky-700
                 dark:text-sky-400
                 hover:underline
@@ -66,4 +66,11 @@
 
 <script setup lang="ts">
 const { t } = useI18n();
+const config = useRuntimeConfig();
+
+// Get external links from configuration
+const veilProjectUrl = config.public.veilProjectUrl;
+const veilStatsUrl = config.public.veilStatsUrl;
+const veilToolsUrl = config.public.veilToolsUrl;
+const githubRepoUrl = config.public.githubRepoUrl;
 </script>

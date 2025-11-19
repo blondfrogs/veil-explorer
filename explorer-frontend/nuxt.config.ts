@@ -8,7 +8,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       site: {
-        url: "http://explorer.veil.zelcore.io",
+        url: process.env.NUXT_PUBLIC_SITE_URL! as string,
       },
       baseUrl: process.env.NUXT_PUBLIC_BASE_URL! as string,
       chainDefault: process.env.NUXT_PUBLIC_CHAIN_DEFAULT! as string,
@@ -19,6 +19,12 @@ export default defineNuxtConfig({
       maxBlockWeight: Number.parseInt(process.env.NUXT_PUBLIC_MAX_BLOCK_WEIGHT!),
       syncNoticeCase: Number.parseInt(process.env.NUXT_PUBLIC_SYNC_NOTICE_CASE!),
       cookieSaveDays: Number.parseInt(process.env.NUXT_PUBLIC_COOKIE_SAVE_DAYS!),
+      // External links
+      veilProjectUrl: process.env.NUXT_PUBLIC_VEIL_PROJECT_URL! as string,
+      veilStatsUrl: process.env.NUXT_PUBLIC_VEIL_STATS_URL! as string,
+      veilToolsUrl: process.env.NUXT_PUBLIC_VEIL_TOOLS_URL! as string,
+      githubRepoUrl: process.env.NUXT_PUBLIC_GITHUB_REPO_URL! as string,
+      internalApiUrl: process.env.NUXT_PUBLIC_INTERNAL_API_URL! as string,
     },
   },
   app: {
@@ -93,7 +99,7 @@ export default defineNuxtConfig({
       redirectOn: "root",
       alwaysRedirect: false,
     },
-    baseUrl: process.env.NUXT_I18N_BASE_URL || "http://explorer.veil.zelcore.io",
+    baseUrl: process.env.NUXT_I18N_BASE_URL! as string,
   },
   image: {
     format: ["webp", "png"],
@@ -110,14 +116,14 @@ export default defineNuxtConfig({
     redirectToCanonicalSiteUrl: process.env.NODE_ENV !== "development",
   },
   site: {
-    url: process.env.NUXT_PUBLIC_SITE_URL || "http://explorer.veil.zelcore.io",
+    url: process.env.NUXT_PUBLIC_SITE_URL! as string,
   },
   schemaOrg: {
     identity: {
       type: "Organization",
       name: "Veil Project",
-      url: "https://veil-project.com",
-      logo: `${process.env.NUXT_PUBLIC_SITE_URL || "http://explorer.veil.zelcore.io"}/icon-192x192-light.png`,
+      url: process.env.NUXT_PUBLIC_VEIL_PROJECT_URL! as string,
+      logo: `${process.env.NUXT_PUBLIC_SITE_URL!}/icon-192x192-light.png`,
     },
   },
   css: ["~/assets/css/tailwind.css", "~/assets/css/common.css"],
