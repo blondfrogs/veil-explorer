@@ -4,6 +4,11 @@ services:
     image: postgres:15-alpine
     container_name: veil-explorer-postgres
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       POSTGRES_DB: veilexplorer
       POSTGRES_USER: ${POSTGRES_USER:-veilexplorer}
@@ -26,6 +31,11 @@ services:
     image: redis:7-alpine
     container_name: veil-explorer-redis
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
@@ -46,6 +56,11 @@ services:
       dockerfile: Dockerfile
     container_name: veil-explorer-backend
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     network_mode: host
     depends_on:
       postgres:
@@ -54,17 +69,17 @@ services:
         condition: service_healthy
     environment:
       # Database connection - use localhost since we're on host network
-      ConnectionStrings__DefaultConnection: "Host=localhost;Port=${POSTGRES_PORT:-5434};Database=veilexplorer;Username=${POSTGRES_USER:-veilexplorer};Password=${POSTGRES_PASSWORD:-changeme};Pooling=true;Maximum Pool Size=100;Tcp Keepalive=true;Keepalive=60;No Reset On Close=true;Client Encoding=UTF8"
-      ConnectionStrings__Redis: "localhost:${REDIS_PORT:-6381}"
-      # Veil Node RPC connection - now can use localhost directly
-      Explorer__Node__Url: http://127.0.0.1:5050/
+      ConnectionStrings__DefaultConnection: "Host=${POSTGRES_HOST:-localhost};Port=${POSTGRES_PORT:-5432};Database=${POSTGRES_DB:-veilexplorer};Username=${POSTGRES_USER:-veilexplorer};Password=${POSTGRES_PASSWORD:-changeme};Pooling=true;Maximum Pool Size=100;Tcp Keepalive=true;Keepalive=60;No Reset On Close=true;Client Encoding=UTF8"
+      ConnectionStrings__Redis: "${REDIS_HOST:-localhost}:${REDIS_PORT:-6379}"
+      # Veil Node RPC connection
+      Explorer__Node__Url: ${VEIL_NODE_URL:-http://127.0.0.1:5050/}
       Explorer__Node__Username: ${VEIL_RPC_USER:-veilrpc}
       Explorer__Node__Password: ${VEIL_RPC_PASSWORD:-changeme}
       # CORS origins
-      Server__CorsOrigins__0: ${FRONTEND_URL:-http://localhost:3080}
+      Server__CorsOrigins__0: ${FRONTEND_URL:-http://localhost:3000}
       # Memory cache
-      MemoryCache__Host: localhost
-      MemoryCache__Port: ${REDIS_PORT:-6381}
+      MemoryCache__Host: ${REDIS_HOST:-localhost}
+      MemoryCache__Port: ${REDIS_PORT:-6379}
     volumes:
       - backend_data:/app/data
       - backend_logs:/app/logs
@@ -76,9 +91,19 @@ services:
       context: ./explorer-frontend
       dockerfile: Dockerfile
       args:
+        # Site URLs
         NUXT_PUBLIC_SITE_URL: ${SITE_URL:-http://localhost:3000}
         NUXT_PUBLIC_I18N_BASE_URL: ${SITE_URL:-http://localhost:3000}
         NUXT_PUBLIC_BASE_URL: ${SITE_URL:-http://localhost:3000}
+        # API URLs
+        NUXT_PUBLIC_BACKEND_API_URL: ${BACKEND_API_URL:-http://localhost:5000/api}
+        NUXT_PUBLIC_INTERNAL_API_URL: ${INTERNAL_API_URL:-http://localhost:5000/api/internal}
+        # External links
+        NUXT_PUBLIC_VEIL_PROJECT_URL: ${VEIL_PROJECT_URL:-https://veil-project.com}
+        NUXT_PUBLIC_VEIL_STATS_URL: ${VEIL_STATS_URL:-https://veil-stats.com}
+        NUXT_PUBLIC_VEIL_TOOLS_URL: ${VEIL_TOOLS_URL:-https://veil.tools}
+        NUXT_PUBLIC_GITHUB_REPO_URL: ${GITHUB_REPO_URL:-https://github.com/steel97/veil-explorer}
+        # Chain configuration
         NUXT_PUBLIC_CHAIN_DEFAULT: main
         NUXT_PUBLIC_CHAIN_APIS: "[{\"name\": \"main\", \"path\": \"${BACKEND_API_URL:-http://localhost:5000/api}\"}]"
         NUXT_PUBLIC_RECENT_BLOCKS_COUNT: 5
@@ -87,6 +112,11 @@ services:
         NUXT_PUBLIC_MAX_BLOCK_WEIGHT: 4000000
         NUXT_PUBLIC_SYNC_NOTICE_CASE: 15
         NUXT_PUBLIC_COOKIE_SAVE_DAYS: 90
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     container_name: veil-explorer-frontend
     restart: unless-stopped
     depends_on:
