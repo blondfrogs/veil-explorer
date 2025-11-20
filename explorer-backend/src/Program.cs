@@ -65,7 +65,6 @@ builder.Services.AddHostedService<HubBackgroundWorker>();
 builder.Services.AddHostedService<ScanTxOutsetWorker>();
 builder.Services.AddHostedService<SupplyWorker>();
 builder.Services.AddHostedService<MempoolWorker>();
-builder.Services.AddHostedService<ScanTxOutsetWorker>();
 if (args.Length > 1 && args[0] == "--fixorphans" && !rpcMode)
 {
     OrphanFixWorker.StartingBlock = int.Parse(args[1]);
@@ -131,7 +130,11 @@ if (swaggerConfig.Swagger?.Enabled ?? false)
 
 app.UseRouting();
 app.UseCors(CORSPolicies.BaseCorsPolicy);
-app.UseHttpsRedirection();
+// Only use HTTPS redirection if HTTPS is actually configured
+if (app.Configuration["ASPNETCORE_URLS"]?.Contains("https") ?? false)
+{
+    app.UseHttpsRedirection();
+}
 app.UseAuthorization();
 
 app.MapControllers();
