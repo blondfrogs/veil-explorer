@@ -54,13 +54,21 @@ public class BlocksRepository(NpgsqlDataSource dataSource, IUtilityService utili
 
         var offsetQuery = sort == SortDirection.DESC ? $"b.height < {_chainInfoSingleton.CurrentSyncedBlock + 1 - offset}" : $"b.height > {offset}";
 
-        await using var cmd = new NpgsqlCommand($"SELECT b.height, b.\"size\", b.weight, b.proof_type, b.\"time\", b.mediantime, (SELECT COUNT(t.txid) as txn from transactions t where t.block_height = b.height) FROM blocks b WHERE {offsetQuery} AND b.synced = true ORDER BY b.height {(sort == SortDirection.ASC ? "ASC" : "DESC")} limit {count};", conn);
+        // Optimized query: Use LEFT JOIN with COUNT instead of correlated subquery
+        // This reduces N queries to 1 query with aggregation
+        await using var cmd = new NpgsqlCommand($@"
+            SELECT b.height, b.""size"", b.weight, b.proof_type, b.""time"", b.mediantime, COALESCE(COUNT(t.txid), 0) as txn
+            FROM blocks b
+            LEFT JOIN transactions t ON t.block_height = b.height
+            WHERE {offsetQuery} AND b.synced = true
+            GROUP BY b.height, b.""size"", b.weight, b.proof_type, b.""time"", b.mediantime
+            ORDER BY b.height {(sort == SortDirection.ASC ? "ASC" : "DESC")}
+            LIMIT {count};", conn);
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         var simplifiedBlocks = new List<SimplifiedBlock>();
 
         while (await reader.ReadAsync(cancellationToken))
         {
-
             var simplifiedBlock = new SimplifiedBlock
             {
                 Height = reader.GetInt32(0),
@@ -94,7 +102,13 @@ public class BlocksRepository(NpgsqlDataSource dataSource, IUtilityService utili
     {
         await using var conn = await _dataSource.OpenConnectionAsync(cancellationToken);
 
-        await using var cmd = new NpgsqlCommand($"SELECT b.height, b.hash, b.strippedsize, b.\"size\", b.weight, b.proof_type, b.proofofstakehash , b.progproofofworkhash, b.progpowmixhash ,b.randomxproofofworkhash ,b.sha256dproofofworkhash , b.proofofworkhash, b.\"version\", b.merkleroot ,b.\"time\", b.mediantime,b.nonce ,b.nonce64 ,b.mixhash , b.bits ,b.difficulty ,b.chainwork ,b.anon_index ,b.veil_data_hash ,b.prog_header_hash ,b.prog_header_hex , b.epoch_number , b.synced,  (SELECT COUNT(t.txid) as txn from transactions t where t.block_height = b.height) FROM blocks b WHERE b.height = {height};", conn);
+        // Optimized: Use LEFT JOIN instead of correlated subquery for transaction count
+        await using var cmd = new NpgsqlCommand($@"
+            SELECT b.height, b.hash, b.strippedsize, b.""size"", b.weight, b.proof_type, b.proofofstakehash, b.progproofofworkhash, b.progpowmixhash, b.randomxproofofworkhash, b.sha256dproofofworkhash, b.proofofworkhash, b.""version"", b.merkleroot, b.""time"", b.mediantime, b.nonce, b.nonce64, b.mixhash, b.bits, b.difficulty, b.chainwork, b.anon_index, b.veil_data_hash, b.prog_header_hash, b.prog_header_hex, b.epoch_number, b.synced, COALESCE(COUNT(t.txid), 0) as txn
+            FROM blocks b
+            LEFT JOIN transactions t ON t.block_height = b.height
+            WHERE b.height = {height}
+            GROUP BY b.height, b.hash, b.strippedsize, b.""size"", b.weight, b.proof_type, b.proofofstakehash, b.progproofofworkhash, b.progpowmixhash, b.randomxproofofworkhash, b.sha256dproofofworkhash, b.proofofworkhash, b.""version"", b.merkleroot, b.""time"", b.mediantime, b.nonce, b.nonce64, b.mixhash, b.bits, b.difficulty, b.chainwork, b.anon_index, b.veil_data_hash, b.prog_header_hash, b.prog_header_hex, b.epoch_number, b.synced;", conn);
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         var success = await reader.ReadAsync(cancellationToken);
         if (!success) return null;
@@ -122,7 +136,13 @@ public class BlocksRepository(NpgsqlDataSource dataSource, IUtilityService utili
     {
         await using var conn = await _dataSource.OpenConnectionAsync(cancellationToken);
 
-        await using var cmd = new NpgsqlCommand($"SELECT b.height, b.hash, b.strippedsize, b.\"size\", b.weight, b.proof_type, b.proofofstakehash , b.progproofofworkhash, b.progpowmixhash ,b.randomxproofofworkhash ,b.sha256dproofofworkhash , b.proofofworkhash, b.\"version\", b.merkleroot, b.\"time\", b.mediantime,b.nonce ,b.nonce64 ,b.mixhash , b.bits ,b.difficulty ,b.chainwork ,b.anon_index ,b.veil_data_hash ,b.prog_header_hash ,b.prog_header_hex , b.epoch_number , b.synced,  (SELECT COUNT(t.txid) as txn from transactions t where t.block_height = b.height) FROM blocks b WHERE b.hash = {TransformHex(hash)};", conn);
+        // Optimized: Use LEFT JOIN instead of correlated subquery for transaction count
+        await using var cmd = new NpgsqlCommand($@"
+            SELECT b.height, b.hash, b.strippedsize, b.""size"", b.weight, b.proof_type, b.proofofstakehash, b.progproofofworkhash, b.progpowmixhash, b.randomxproofofworkhash, b.sha256dproofofworkhash, b.proofofworkhash, b.""version"", b.merkleroot, b.""time"", b.mediantime, b.nonce, b.nonce64, b.mixhash, b.bits, b.difficulty, b.chainwork, b.anon_index, b.veil_data_hash, b.prog_header_hash, b.prog_header_hex, b.epoch_number, b.synced, COALESCE(COUNT(t.txid), 0) as txn
+            FROM blocks b
+            LEFT JOIN transactions t ON t.block_height = b.height
+            WHERE b.hash = {TransformHex(hash)}
+            GROUP BY b.height, b.hash, b.strippedsize, b.""size"", b.weight, b.proof_type, b.proofofstakehash, b.progproofofworkhash, b.progpowmixhash, b.randomxproofofworkhash, b.sha256dproofofworkhash, b.proofofworkhash, b.""version"", b.merkleroot, b.""time"", b.mediantime, b.nonce, b.nonce64, b.mixhash, b.bits, b.difficulty, b.chainwork, b.anon_index, b.veil_data_hash, b.prog_header_hash, b.prog_header_hex, b.epoch_number, b.synced;", conn);
         await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
         var success = await reader.ReadAsync(cancellationToken);
         if (!success) return null;

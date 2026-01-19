@@ -45,6 +45,8 @@ public class MempoolWorker(ILogger<MempoolWorker> logger, IOptionsMonitor<Explor
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Can't handle mempool info");
+                // Add delay on error to prevent tight retry loops when node is unavailable
+                await Task.Delay(TimeSpan.FromMilliseconds(_explorerConfig.CurrentValue.PullMempoolDelay), cancellationToken);
             }
         }
     }

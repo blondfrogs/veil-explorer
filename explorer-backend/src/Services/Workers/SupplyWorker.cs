@@ -113,6 +113,8 @@ public class SupplyWorker(ILogger<SupplyWorker> logger, IOptionsMonitor<Explorer
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Can't handle supply");
+                // Add delay on error to prevent tight retry loops when node is unavailable
+                await Task.Delay(TimeSpan.FromMilliseconds(_explorerConfig.CurrentValue.SupplyPullDelay), cancellationToken);
             }
         }
     }

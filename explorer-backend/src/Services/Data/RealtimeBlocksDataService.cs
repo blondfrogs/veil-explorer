@@ -164,11 +164,15 @@ public class RealtimeBlocksDataService : IBlocksDataService
     }
     private void ConvertToSimplifiedBlock(List<Task<GetBlock?>> rawBlocksList, List<SimplifiedBlock> blocksList)
     {
+        // Create a dictionary for O(1) lookup instead of O(n²) nested loops
+        var blocksByHeight = blocksList.ToDictionary(b => b.Height);
+
         foreach (var rawBlock in rawBlocksList)
         {
-            foreach (var block in blocksList)
+            if (rawBlock is not null && rawBlock.Result is not null && rawBlock.Result.Result is not null)
             {
-                if (rawBlock is not null && rawBlock.Result is not null && rawBlock.Result.Result is not null && rawBlock.Result.Result.Height == block.Height)
+                var height = rawBlock.Result.Result.Height;
+                if (blocksByHeight.TryGetValue(height, out var block))
                 {
                     block.Size = rawBlock.Result.Result.Size;
                     block.Weight = rawBlock.Result.Result.Weight;
@@ -176,7 +180,6 @@ public class RealtimeBlocksDataService : IBlocksDataService
                     block.Time = rawBlock.Result.Result.Time;
                     block.MedianTime = rawBlock.Result.Result.Mediantime;
                     block.TxCount = rawBlock.Result.Result.Tx?.Count ?? 0;
-                    break;
                 }
             }
         }

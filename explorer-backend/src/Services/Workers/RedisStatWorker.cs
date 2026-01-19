@@ -47,8 +47,8 @@ public class RedisStatWorker : BackgroundService
                 _redisStats.MemoryUsageBytes = memoryValue;
             }
             catch { }
-        }
 
-        await Task.Delay(5000, cancellationToken);
+            await Task.Delay(5000, cancellationToken);
+        }
     }
 }

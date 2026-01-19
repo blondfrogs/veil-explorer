@@ -39,6 +39,8 @@ public class ScanTxOutsetWorker(ILogger<ScanTxOutsetWorker> logger, IOptionsMoni
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Can't handle txoutset queue");
+                // Add delay on error to prevent tight retry loops when node is unavailable
+                await Task.Delay(TimeSpan.FromMilliseconds(_explorerConfig.CurrentValue.NodeWorkersPullDelay), cancellationToken);
             }
         }
     }

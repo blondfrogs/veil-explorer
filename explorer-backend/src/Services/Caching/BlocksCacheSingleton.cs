@@ -91,9 +91,12 @@ public class BlocksCacheSingleton
     public async Task<GetBlockResult?> GetCachedBlockByHeightAsync(string height, CancellationToken ct)
     {
         var db = _cache.GetDatabase();
+
+        // Get the block hash by height
         var blockHash = await db.StringGetAsync(height);
         if (string.IsNullOrWhiteSpace(blockHash)) return null;
 
+        // Get the block data by hash
         string? hash = blockHash;
         var rawBlock = await db.StringGetAsync(hash);
         if (string.IsNullOrWhiteSpace(rawBlock)) return null;

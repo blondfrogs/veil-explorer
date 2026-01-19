@@ -17,18 +17,24 @@ namespace ExplorerBackend.Controllers;
 public class NodeProxyController : ControllerBase
 {
     private readonly string _invalidOperation;
+    private readonly string _rateLimitExceeded;
     private readonly static List<string> _emptyList = [];
     private readonly IOptions<ServerConfig> _serverConfig;
     private readonly IOptions<ExplorerConfig> _explorerConfig;
     private readonly NodeRequester _nodeRequester;
     private readonly ChaininfoSingleton _chainInfoSingleton;
+    private readonly GlobalRateLimiter _rateLimiter;
+    private readonly ILogger<NodeProxyController> _logger;
 
-    public NodeProxyController(IOptions<ServerConfig> serverConfig, IOptions<ExplorerConfig> explorerConfig, NodeRequester nodeRequester, ChaininfoSingleton chainInfoSingleton)
+    public NodeProxyController(IOptions<ServerConfig> serverConfig, IOptions<ExplorerConfig> explorerConfig, NodeRequester nodeRequester,
+        ChaininfoSingleton chainInfoSingleton, GlobalRateLimiter rateLimiter, ILogger<NodeProxyController> logger)
     {
         _explorerConfig = explorerConfig;
         _serverConfig = serverConfig;
         _nodeRequester = nodeRequester;
         _chainInfoSingleton = chainInfoSingleton;
+        _rateLimiter = rateLimiter;
+        _logger = logger;
         _invalidOperation = JsonSerializer.Serialize(new GenericResult
         {
             Result = null,
@@ -37,6 +43,16 @@ public class NodeProxyController : ControllerBase
             {
                 Code = -2,
                 Message = "Forbidden by safe mode or invalid method name" // RPC_FORBIDDEN_BY_SAFE_MODE
+            }
+        });
+        _rateLimitExceeded = JsonSerializer.Serialize(new GenericResult
+        {
+            Result = null,
+            Id = null,
+            Error = new()
+            {
+                Code = -4,
+                Message = "Rate limit exceeded. This method is limited to 10 calls per 10 minutes globally. Please try again later." // RPC_RATE_LIMITED
             }
         });
     }
@@ -57,6 +73,30 @@ public class NodeProxyController : ControllerBase
         if (!_explorerConfig.Value.NodeProxyAllowedMethods?.Contains(model.Method ?? "") ?? false)
             return Content(_invalidOperation, "application/json");
 
+        // Rate limit for importlightwalletaddress (configurable via .env)
+        if ((model.Method ?? "") == "importlightwalletaddress")
+        {
+            var rateLimitConfig = _explorerConfig.Value.ImportLightWalletRateLimit ?? new() { MaxCalls = 10, WindowSeconds = 600 };
+            var maxCalls = rateLimitConfig.MaxCalls;
+            var windowSeconds = rateLimitConfig.WindowSeconds;
+
+            var isAllowed = await _rateLimiter.IsAllowedAsync("importlightwalletaddress", maxCalls, windowSeconds);
+
+            if (!isAllowed)
+            {
+                var timeUntilReset = _rateLimiter.GetTimeUntilReset("importlightwalletaddress", windowSeconds);
+                var currentCount = _rateLimiter.GetRequestCount("importlightwalletaddress", windowSeconds);
+
+                _logger.LogWarning(
+                    "Rate limit exceeded for importlightwalletaddress. Current: {CurrentCount}/{MaxCalls}, Reset in: {ResetTime}",
+                    currentCount, maxCalls, timeUntilReset);
+
+                return Content(_rateLimitExceeded, "application/json");
+            }
+
+            _logger.LogInformation("importlightwalletaddress called. Current count: {Count}/{Max}",
+                _rateLimiter.GetRequestCount("importlightwalletaddress", windowSeconds), maxCalls);
+        }
 
         if ((model.Method ?? "") == "getblockchaininfo")
         {

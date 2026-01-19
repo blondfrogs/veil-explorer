@@ -44,7 +44,7 @@ public class SimplifiedBlocksCacheSingleton
         (height <= _latestBlockHeight && height > _latestBlockHeight - _blocksBufferCapacity);
 
     // writing blocks
-    public void SetBlockCache(GetBlockResult block, bool isLatestBlock = false)
+    public async Task SetBlockCacheAsync(GetBlockResult block, bool isLatestBlock = false)
     {
         if (block is null || block.Height < 1)
         {
@@ -60,61 +60,74 @@ public class SimplifiedBlocksCacheSingleton
             return;
         }
 
-        _semaphoreSlim.Wait(10);
+        // Use async wait with proper timeout checking
+        bool lockAcquired = await _semaphoreSlim.WaitAsync(100).ConfigureAwait(false);
 
-        if (isLatestBlock)
+        if (!lockAcquired)
         {
-            int differenceOfHeight = block.Height - _latestBlockHeight;
-            if (differenceOfHeight < 1) goto PrevBlock;
+            _logger.LogWarning("Failed to acquire semaphore for block cache update for height {Height}", block.Height);
+            return;
+        }
 
-            _latestBlockHeight = block.Height;
-            long offset;
-
-            if (differenceOfHeight > 1)
+        try
+        {
+            if (isLatestBlock)
             {
-                if (_latestBlockPosition + differenceOfHeight - 1 > _blocksBufferCapacity - 1)
+                int differenceOfHeight = block.Height - _latestBlockHeight;
+                if (differenceOfHeight < 1) goto PrevBlock;
+
+                _latestBlockHeight = block.Height;
+                long offset;
+
+                if (differenceOfHeight > 1)
                 {
-                    while (differenceOfHeight > _blocksBufferCapacity)
+                    if (_latestBlockPosition + differenceOfHeight - 1 > _blocksBufferCapacity - 1)
                     {
-                        differenceOfHeight -= _blocksBufferCapacity;
+                        while (differenceOfHeight > _blocksBufferCapacity)
+                        {
+                            differenceOfHeight -= _blocksBufferCapacity;
+                        }
+                        offset = (_latestBlockPosition + differenceOfHeight - 1) * _BytesInBlock;
                     }
-                    offset = (_latestBlockPosition + differenceOfHeight - 1) * _BytesInBlock;
+                    else
+                        offset = (_latestBlockPosition + differenceOfHeight - 1) * _BytesInBlock;
                 }
                 else
-                    offset = (_latestBlockPosition + differenceOfHeight - 1) * _BytesInBlock;
+                    offset = _latestBlockPosition * _BytesInBlock;
+
+                SerializeBlock(block, _blocksBuffer, (nuint)offset);
+
+                _latestBlockPosition += differenceOfHeight;
+
+                while (_latestBlockPosition > _blocksBufferCapacity - 1)
+                    _latestBlockPosition -= _blocksBufferCapacity;
+
+                return;
             }
-            else
-                offset = _latestBlockPosition * _BytesInBlock;
 
-            SerializeBlock(block, _blocksBuffer, (nuint)offset);
+        PrevBlock:
+            if (block.Height < _latestBlockHeight && block.Height > (_latestBlockHeight - _blocksBufferCapacity))
+            {
+                int positionToWrite = _latestBlockPosition - (_latestBlockHeight - block.Height) - 1;
 
-            _latestBlockPosition += differenceOfHeight;
+                while (positionToWrite > _blocksBufferCapacity)
+                    positionToWrite -= _blocksBufferCapacity;
 
-            while (_latestBlockPosition > _blocksBufferCapacity - 1)
-                _latestBlockPosition -= _blocksBufferCapacity;
+                long offset = positionToWrite * _BytesInBlock;
 
-            _semaphoreSlim.Release();
-            return;
+                SerializeBlock(block, _blocksBuffer, (nuint)offset);
+            }
         }
-
-    PrevBlock:
-        if (block.Height < _latestBlockHeight && block.Height > (_latestBlockHeight - _blocksBufferCapacity))
+        finally
         {
-            int positionToWrite = _latestBlockPosition - (_latestBlockHeight - block.Height) - 1;
-
-            while (positionToWrite > _blocksBufferCapacity)
-                positionToWrite -= _blocksBufferCapacity;
-
-            long offset = positionToWrite * _BytesInBlock;
-
-            SerializeBlock(block, _blocksBuffer, (nuint)offset);
-
             _semaphoreSlim.Release();
-            return;
         }
+    }
 
-        _semaphoreSlim.Release();
-        return;
+    // Synchronous wrapper for backward compatibility (not recommended, prefer async version)
+    public void SetBlockCache(GetBlockResult block, bool isLatestBlock = false)
+    {
+        SetBlockCacheAsync(block, isLatestBlock).GetAwaiter().GetResult();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

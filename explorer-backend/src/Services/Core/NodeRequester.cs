@@ -23,16 +23,17 @@ public class NodeRequester
     private readonly IOptionsMonitor<ExplorerConfig> _explorerConfig;
     private readonly ChaininfoSingleton _chainInfoSingleton;
     private readonly NodeApiCacheSingleton _nodeApiCacheSingleton;
+    private readonly ILogger<NodeRequester> _logger;
     private readonly JsonSerializerOptions _serializerOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
     public NodeRequester(IHttpClientFactory httpClientFactory, IOptionsMonitor<ExplorerConfig> explorerConfig,
-        ChaininfoSingleton chainInfoSingleton, NodeApiCacheSingleton nodeApiCacheSingleton)
+        ChaininfoSingleton chainInfoSingleton, NodeApiCacheSingleton nodeApiCacheSingleton, ILogger<NodeRequester> logger)
     {
-        (_explorerConfig, _httpClientFactory, _chainInfoSingleton, _nodeApiCacheSingleton) =
-        (explorerConfig, httpClientFactory, chainInfoSingleton, nodeApiCacheSingleton);
+        (_explorerConfig, _httpClientFactory, _chainInfoSingleton, _nodeApiCacheSingleton, _logger) =
+        (explorerConfig, httpClientFactory, chainInfoSingleton, nodeApiCacheSingleton, logger);
         _nodeFailureError = JsonSerializer.Serialize(new GenericResult
         {
             Result = null,
@@ -87,7 +88,14 @@ public class NodeRequester
             if (data != null && data.Result != null)
                 _nodeApiCacheSingleton.SetApiCache($"scantxoutset-{target}", data);
         }
-        catch { }
+        catch (System.Text.Json.JsonException ex)
+        {
+            _logger.LogWarning(ex, "Failed to deserialize scantxoutset response for {Target}", target);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error scanning txoutset for {Target}", target);
+        }
     }
 
     public async Task<GetBlockchainInfo?> GetBlockChainInfo(CancellationToken cancellationToken)
@@ -104,7 +112,17 @@ public class NodeRequester
             Params = new List<object>([])
         };
         var getBlockchainInfoResponse = await httpClient.PostAsJsonAsync("", getBlockchainInfoRequest, _serializerOptions, cancellationToken);
-        return await getBlockchainInfoResponse.Content.ReadFromJsonAsync<GetBlockchainInfo>(_serializerOptions, cancellationToken);
+
+        try
+        {
+            return await getBlockchainInfoResponse.Content.ReadFromJsonAsync<GetBlockchainInfo>(_serializerOptions, cancellationToken);
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            var errorContent = await getBlockchainInfoResponse.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogWarning(ex, "Failed to deserialize getblockchaininfo response. Response: {Response}", errorContent);
+            return null;
+        }
     }
 
     public async Task<GetBlockHash?> GetBlockHash(uint height, CancellationToken cancellationToken)
@@ -120,7 +138,17 @@ public class NodeRequester
             Params = new List<object>([height])
         };
         var getBlockHashResponse = await httpClient.PostAsJsonAsync("", getBlockHashRequest, _serializerOptions, cancellationToken);
-        return await getBlockHashResponse.Content.ReadFromJsonAsync<GetBlockHash>(_serializerOptions, cancellationToken);
+
+        try
+        {
+            return await getBlockHashResponse.Content.ReadFromJsonAsync<GetBlockHash>(_serializerOptions, cancellationToken);
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            var errorContent = await getBlockHashResponse.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogWarning(ex, "Failed to deserialize getblockhash response for height {Height}. Response: {Response}", height, errorContent);
+            return null;
+        }
     }
 
     public async Task<GetBlock?> GetBlock(string hash, CancellationToken cancellationToken, int simplifiedTxInfo = 1)
@@ -137,7 +165,17 @@ public class NodeRequester
             Params = new List<object>([hash, simplifiedTxInfo])
         };
         var getBlockResponse = await httpClient.PostAsJsonAsync("", getBlockRequest, _serializerOptions, cancellationToken);
-        return await getBlockResponse.Content.ReadFromJsonAsync<GetBlock>(_serializerOptions, cancellationToken);
+
+        try
+        {
+            return await getBlockResponse.Content.ReadFromJsonAsync<GetBlock>(_serializerOptions, cancellationToken);
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            var errorContent = await getBlockResponse.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogWarning(ex, "Failed to deserialize getblock response for hash {Hash}. Response: {Response}", hash, errorContent);
+            return null;
+        }
     }
 
     public async Task<GetBlock?> GetBlock(uint height, CancellationToken cancellationToken, int simplifiedTxInfo = 1)
@@ -160,7 +198,17 @@ public class NodeRequester
             Params = new List<object>([])
         };
         var getChainalgoStatsResponse = await httpClient.PostAsJsonAsync("", getChainalgoStatsRequest, _serializerOptions, cancellationToken);
-        return await getChainalgoStatsResponse.Content.ReadFromJsonAsync<GetChainalgoStats>(_serializerOptions, cancellationToken);
+
+        try
+        {
+            return await getChainalgoStatsResponse.Content.ReadFromJsonAsync<GetChainalgoStats>(_serializerOptions, cancellationToken);
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            var errorContent = await getChainalgoStatsResponse.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogWarning(ex, "Failed to deserialize getchainalgostats response. Response: {Response}", errorContent);
+            return null;
+        }
     }
 
     public async Task<GetRawMempool?> GetRawMempool(CancellationToken cancellationToken, bool isSerialized = false)
@@ -177,7 +225,17 @@ public class NodeRequester
             Params = new List<object>([isSerialized])
         };
         var getRawMempoolResult = await httpClient.PostAsJsonAsync("", getRawMempoolRequest, _serializerOptions, cancellationToken);
-        return await getRawMempoolResult.Content.ReadFromJsonAsync<GetRawMempool>(_serializerOptions, cancellationToken);
+
+        try
+        {
+            return await getRawMempoolResult.Content.ReadFromJsonAsync<GetRawMempool>(_serializerOptions, cancellationToken);
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            var errorContent = await getRawMempoolResult.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogWarning(ex, "Failed to deserialize getrawmempool response. Response: {Response}", errorContent);
+            return null;
+        }
     }
 
     public async Task<GetRawTransaction?> GetRawTransaction(string txId, CancellationToken cancellationToken)
@@ -194,7 +252,18 @@ public class NodeRequester
             Params = new List<object>([txId, true])
         };
         var getRawTxResponse = await httpClient.PostAsJsonAsync("", getRawTxRequest, _serializerOptions, cancellationToken);
-        return await getRawTxResponse.Content.ReadFromJsonAsync<GetRawTransaction>(_serializerOptions, cancellationToken);
+
+        try
+        {
+            return await getRawTxResponse.Content.ReadFromJsonAsync<GetRawTransaction>(_serializerOptions, cancellationToken);
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            // Log the error response from node for debugging
+            var errorContent = await getRawTxResponse.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogWarning(ex, "Failed to deserialize RPC response for tx {TxId}. Response: {Response}", txId, errorContent);
+            return null;
+        }
     }
 
     public async Task<GetBlock?> GetLatestBlock(CancellationToken cancellationToken, bool isOrphanFix = false)
@@ -261,7 +330,18 @@ public class NodeRequester
             Params = new List<object>([ctxInterval])
         };
         var getChainTxStatsResponse = await httpClient.PostAsJsonAsync("", getChainTxStatsRequest, _serializerOptions, cancellationToken);
-        var chainTxStats = await getChainTxStatsResponse.Content.ReadFromJsonAsync<GetChainTxStats>(_serializerOptions, cancellationToken);
+
+        GetChainTxStats? chainTxStats;
+        try
+        {
+            chainTxStats = await getChainTxStatsResponse.Content.ReadFromJsonAsync<GetChainTxStats>(_serializerOptions, cancellationToken);
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            var errorContent = await getChainTxStatsResponse.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogWarning(ex, "Failed to deserialize getchaintxstats response for interval {Interval}. Response: {Response}", ctxInterval, errorContent);
+            return new();
+        }
 
         if (chainTxStats == null || chainTxStats.Result == null) throw new Exception();
         return chainTxStats.Result;

@@ -22,6 +22,13 @@ public class ExplorerConfig
     public QueueConfig? ScanTxOutsetQueue { get; set; }
     public int? UseHardRequestThrottle { get; set; }
     public int? UseHardRequestThrottleProxy { get; set; }
+    public RateLimitConfig? ImportLightWalletRateLimit { get; set; }
+}
+
+public class RateLimitConfig
+{
+    public int MaxCalls { get; set; } = 10;
+    public int WindowSeconds { get; set; } = 600; // 10 minutes
 }
 
 

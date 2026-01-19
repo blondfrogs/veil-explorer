@@ -80,6 +80,9 @@ services:
       # Memory cache
       MemoryCache__Host: ${REDIS_HOST:-localhost}
       MemoryCache__Port: ${REDIS_PORT:-6379}
+      # Rate limiting
+      Explorer__ImportLightWalletRateLimit__MaxCalls: ${IMPORT_LIGHTWALLET_MAX_CALLS:-10}
+      Explorer__ImportLightWalletRateLimit__WindowSeconds: ${IMPORT_LIGHTWALLET_WINDOW_SECONDS:-600}
     volumes:
       - backend_data:/app/data
       - backend_logs:/app/logs

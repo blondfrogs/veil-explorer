@@ -50,6 +50,7 @@ builder.Services.AddSingleton<InternalSingleton>();
 builder.Services.AddSingleton<NodeApiCacheSingleton>();
 builder.Services.AddSingleton<ScanTxOutsetBackgroundTaskQueue>();
 builder.Services.AddSingleton<NodeRequester>();
+builder.Services.AddSingleton<GlobalRateLimiter>();
 builder.Services.AddSingleton<IUtilityService, UtilityService>();
 builder.Services.AddSingleton<IBlocksService, BlocksService>();
 

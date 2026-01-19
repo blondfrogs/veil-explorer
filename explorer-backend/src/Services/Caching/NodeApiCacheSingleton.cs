@@ -9,7 +9,7 @@ public class NodeApiCacheSingleton
 {
     private readonly IOptionsMonitor<MemoryCacheConfig> _memoryCacheConfig;
     private MemoryCache Cache { get; set; }
-    private readonly List<string> ApisInQueue = new();
+    private readonly HashSet<string> ApisInQueue = new();
     private readonly SemaphoreSlim ApisQueueSemaphore = new(1, 1);
 
     public NodeApiCacheSingleton(IOptionsMonitor<MemoryCacheConfig> memoryCacheConfig)

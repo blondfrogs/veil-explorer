@@ -56,6 +56,9 @@ public class InternalHub(ILogger<EventsHub> logger, ChaininfoSingleton chainInfo
             var txInputs = new Dictionary<string, Dictionary<string, double>>(); // address, Dict<txid, amount>
             var txOutputs = new Dictionary<string, Dictionary<string, double>>(); // address, Dict<txid, amount>
 
+            // Convert addresses array to HashSet for O(1) lookups instead of O(n) - huge CPU optimization
+            var addressSet = new HashSet<string>(addresses);
+
             var mBlock = _chainInfoSingleton.CurrentSyncedBlock;
             var si = 0;
             for (var i = 1; i <= mBlock; i++)
@@ -82,20 +85,16 @@ public class InternalHub(ILogger<EventsHub> logger, ChaininfoSingleton chainInfo
                                 {
                                     input.PrevOutAddresses?.ForEach(addr =>
                                     {
-                                        foreach (var address in addresses)
+                                        // Use HashSet.Contains for O(1) lookup instead of nested foreach
+                                        if (addressSet.Contains(addr))
                                         {
+                                            if (!txInputs.ContainsKey(addr))
+                                                txInputs.Add(addr, []);
 
-                                            if (addr == address)
-                                            {
-                                                if (!txInputs.ContainsKey(address))
-                                                    txInputs.Add(address, []);
-
-                                                if (txInputs[address].ContainsKey(dtr.TxId!))
-                                                    txInputs[address][dtr.TxId!] += input.PrevOutAmount / 100000000.0d;
-                                                else
-                                                    txInputs[address].Add(dtr.TxId!, input.PrevOutAmount / 100000000.0d);
-                                            }
-
+                                            if (txInputs[addr].ContainsKey(dtr.TxId!))
+                                                txInputs[addr][dtr.TxId!] += input.PrevOutAmount / 100000000.0d;
+                                            else
+                                                txInputs[addr].Add(dtr.TxId!, input.PrevOutAmount / 100000000.0d);
                                         }
                                     });
                                 }
@@ -105,20 +104,16 @@ public class InternalHub(ILogger<EventsHub> logger, ChaininfoSingleton chainInfo
                                 {
                                     output.Addresses?.ForEach(addr =>
                                     {
-                                        foreach (var address in addresses)
+                                        // Use HashSet.Contains for O(1) lookup instead of nested foreach
+                                        if (addressSet.Contains(addr))
                                         {
+                                            if (!txOutputs.ContainsKey(addr))
+                                                txOutputs.Add(addr, []);
 
-                                            if (addr == address)
-                                            {
-                                                if (!txOutputs.ContainsKey(address))
-                                                    txOutputs.Add(address, []);
-
-                                                if (txOutputs[address].ContainsKey(dtr.TxId!))
-                                                    txOutputs[address][dtr.TxId!] += output.Amount / 100000000.0d;
-                                                else
-                                                    txOutputs[address].Add(dtr.TxId!, output.Amount / 100000000.0d);
-                                            }
-
+                                            if (txOutputs[addr].ContainsKey(dtr.TxId!))
+                                                txOutputs[addr][dtr.TxId!] += output.Amount / 100000000.0d;
+                                            else
+                                                txOutputs[addr].Add(dtr.TxId!, output.Amount / 100000000.0d);
                                         }
                                     });
                                 }

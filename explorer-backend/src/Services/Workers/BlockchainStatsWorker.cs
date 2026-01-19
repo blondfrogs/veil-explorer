@@ -56,6 +56,8 @@ public class BlockchainStatsWorker(ILogger<BlockchainStatsWorker> logger, IOptio
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Can't handle blockchain stats info");
+                // Add delay on error to prevent tight retry loops when node is unavailable
+                await Task.Delay(TimeSpan.FromMilliseconds(_explorerConfig.CurrentValue.PullBlockchainStatsDelay), cancellationToken);
             }
         }
     }

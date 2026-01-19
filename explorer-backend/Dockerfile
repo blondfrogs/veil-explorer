@@ -31,6 +31,6 @@ EXPOSE 5000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:5000/api/blockchain/info || exit 1
+  CMD curl -f http://localhost:5000/api/BlockchainInfo || exit 1
 
 ENTRYPOINT ["dotnet", "explorer-backend.dll"]
