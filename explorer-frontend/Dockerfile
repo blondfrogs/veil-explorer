@@ -54,6 +54,10 @@ COPY . .
 RUN if [ -f public/fetchtxs.html.tpl ]; then \
       sed "s|\${NUXT_PUBLIC_INTERNAL_API_URL}|${NUXT_PUBLIC_INTERNAL_API_URL}|g" \
         public/fetchtxs.html.tpl > public/fetchtxs.html; \
+    fi && \
+    if [ -f public/_robots.txt.tpl ]; then \
+      sed "s|\${NUXT_PUBLIC_SITE_URL}|${NUXT_PUBLIC_SITE_URL}|g" \
+        public/_robots.txt.tpl > public/_robots.txt; \
     fi
 
 # Build the application

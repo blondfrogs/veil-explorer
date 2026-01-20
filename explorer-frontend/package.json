@@ -4,13 +4,15 @@
   "private": true,
   "scripts": {
     "build": "npm run check-types && nuxt build",
+    "build:prod": "npm run process-templates && npm run build",
     "dev": "nuxt dev --max-http-header-size 10000000",
     "check-types": "npx nuxi typecheck",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "process-templates": "../scripts/process-templates.sh"
   },
   "dependencies": {
     "@antfu/eslint-config": "^5.2.1",

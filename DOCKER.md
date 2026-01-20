@@ -43,8 +43,10 @@ docker-compose up -d
 This will:
 - Create and initialize the PostgreSQL database with required schemas
 - Start Redis cache server
-- Build and start the backend API
+- Build and start the backend API (processes URL templates during build)
 - Build and start the frontend
+
+**Note:** The Docker build automatically processes template files (`fetchtxs.html.tpl`, `_robots.txt.tpl`) and generates final files with your configured URLs. The repository includes development versions with localhost defaults for non-Docker users.
 
 ### 4. Access the Explorer
 
@@ -181,13 +183,63 @@ For production deployments:
 5. **Backup volumes** - Regularly backup `postgres_data` volume
 6. **Monitor resources** - Adjust memory limits as needed
 
-Example production `.env`:
+### Configuring Your Own Domain
 
+The Veil Explorer is designed to be easily deployed with your own domain. All domain-specific URLs are configured through environment variables in the `.env` file.
+
+**Key Environment Variables for Domain Configuration:**
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `SITE_URL` | Public-facing URL for the frontend (used for SEO, canonical URLs, sitemaps) | `https://explorer.yourdomain.com` |
+| `FRONTEND_URL` | Frontend application URL (used for CORS) | `https://explorer.yourdomain.com` |
+| `BACKEND_API_URL` | Public API endpoint URL | `https://explorer.yourdomain.com/api` |
+| `INTERNAL_API_URL` | Internal API endpoint (SignalR, exports) | `https://explorer.yourdomain.com/api/internal` |
+
+**During Docker build, the following files are automatically generated from templates:**
+- `explorer-frontend/public/fetchtxs.html` - Transaction export tool (uses `INTERNAL_API_URL`)
+- `explorer-frontend/public/_robots.txt` - Search engine robots file (uses `SITE_URL`)
+
+**Common Production Configurations:**
+
+**Single Domain (API under /api path):**
 ```bash
-POSTGRES_PASSWORD=very_secure_random_password
-VEIL_RPC_PASSWORD=another_secure_password
+FRONTEND_URL=https://explorer.yourdomain.com
 SITE_URL=https://explorer.yourdomain.com
 BACKEND_API_URL=https://explorer.yourdomain.com/api
+INTERNAL_API_URL=https://explorer.yourdomain.com/api/internal
+```
+
+**Separate Subdomains:**
+```bash
+FRONTEND_URL=https://explorer.yourdomain.com
+SITE_URL=https://explorer.yourdomain.com
+BACKEND_API_URL=https://api.yourdomain.com/api
+INTERNAL_API_URL=https://api.yourdomain.com/api/internal
+```
+
+**Custom Ports (Development/Private Network):**
+```bash
+FRONTEND_URL=http://192.168.1.100:3000
+SITE_URL=http://192.168.1.100:3000
+BACKEND_API_URL=http://192.168.1.100:5000/api
+INTERNAL_API_URL=http://192.168.1.100:5000/api/internal
+```
+
+**Optional External Links (shown in footer):**
+```bash
+VEIL_PROJECT_URL=https://veil-project.com
+VEIL_STATS_URL=https://veil-stats.com
+VEIL_TOOLS_URL=https://veil.tools
+GITHUB_REPO_URL=https://github.com/yourusername/veil-explorer
+```
+
+**After configuring your domain settings:**
+```bash
+# Rebuild with new configuration
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
 ```
 
 ## Management Commands

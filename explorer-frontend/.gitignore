@@ -6,3 +6,6 @@ nuxt.d.ts
 #.env
 *.cfg
 *.rsa
+
+# Note: public/fetchtxs.html and public/_robots.txt contain development defaults
+# They are committed to git and overwritten during production builds

@@ -13,6 +13,32 @@ See [DOCKER.md](DOCKER.md) for easy deployment using Docker Compose.
 
 **⚠️ Security Note:** Always copy from `.example` files and configure with your own credentials. Never commit real passwords to git. See [SECURITY.md](SECURITY.md) for details.
 
+## Deploying with Your Own Domain
+
+The Veil Explorer is designed to be easily deployed with your own domain name. All domain-specific URLs are configured through environment variables.
+
+### For Docker Deployments:
+1. Copy `.env.example` to `.env`
+2. Configure your domain URLs in `.env` (see `SITE_URL`, `BACKEND_API_URL`, `INTERNAL_API_URL`)
+3. Run `docker-compose up -d`
+
+See the [Configuring Your Own Domain](DOCKER.md#configuring-your-own-domain) section in DOCKER.md for detailed examples.
+
+### For Non-Docker Deployments:
+
+**Development (localhost):**
+- Clone and run immediately - default files use `http://localhost:3000` and `http://localhost:5000`
+- Just run `npm run dev` in the frontend directory
+
+**Production deployment:**
+1. Copy `.env.example` to `.env` and configure your domain settings
+2. Option A: Run `npm run build:prod` (processes templates and builds)
+3. Option B: Run `./scripts/process-templates.sh` then `npm run build`
+
+The template processing updates:
+- `explorer-frontend/public/fetchtxs.html` - Transaction export tool (uses `INTERNAL_API_URL`)
+- `explorer-frontend/public/_robots.txt` - Search engine robots file (uses `SITE_URL`)
+
 # Features
 - light/dark theme
 - multilingual UI (see [/docs/localization.md](/docs/localization.md))
